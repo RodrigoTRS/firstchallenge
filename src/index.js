@@ -16,8 +16,8 @@ function checksExistsUserAccount(request, response, next) {
 
   if (!user) {
     return response
-    .status(400)
-    .json({ error: "User not found." })
+    .status(404)
+    .json({error: 'Mensagem do erro'})
   }
 
   request.user = user;
@@ -28,18 +28,28 @@ function checksExistsUserAccount(request, response, next) {
 app.post('/users', (request, response) => {
   const { name, username } = request.body;
 
-  const User = { 
-    id: uuidv4(),
-    name,
-    username, 
-    todos: []
-  }
+  const usernametest = users.find( user => user.username === username );
 
-  users.push(User);
+  if (!usernametest) {
+
+    const User = { 
+      id: uuidv4(),
+      name,
+      username, 
+      todos: []
+    }
+  
+    users.push(User);
+    
+    return response
+    .status(201)
+    .json(User)
+
+  }
   
   return response
-  .status(201)
-  .json(User)
+  .status(400)
+  .json({error: "Bad Request"})
 
 });
 
@@ -75,20 +85,28 @@ app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
   const { id } = request.query;
   const { title, deadline } = request.body;
 
-  const todo = user.todos.find((todo) => todo.id === id);
+  const Todo = user.todos.find((todo) => todo.id === id);
 
-  if (!todo) {
+  if (!Todo) {
     return response
-    .status(400)
-    .json({ error: "Todo not found." })
+    .status(404)
+    .json({ error: "Not Found" })
   }
 
-  todo.title = title;
-  todo.deadline = deadline;
+  Todo.title = title;
+  Todo.deadline = deadline;
+
+  const done = Todo.done;
+
+  const todoPrint = {
+    title,
+    deadline,
+    done,
+  }
 
   return response
   .status(201)
-  .send();
+  .json(todoPrint);
 });
 
 app.patch('/todos/:id/done', checksExistsUserAccount, (request, response) => {
@@ -99,8 +117,8 @@ app.patch('/todos/:id/done', checksExistsUserAccount, (request, response) => {
 
   if (!todo) {
     return response
-    .status(400)
-    .json({ error: "Todo not found." })
+    .status(404)
+    .json({ error: "Not Found" })
   }
 
   todo.done = true;
@@ -118,8 +136,8 @@ app.delete('/todos/:id', checksExistsUserAccount, (request, response) => {
 
   if (!todo) {
     return response
-    .status(400)
-    .json({ error: "Todo not found." })
+    .status(404)
+    .json({ error: "Not Found" })
   }
 
 const todoIndex = user.todos.findIndex(todo => {
@@ -129,7 +147,7 @@ const todoIndex = user.todos.findIndex(todo => {
 user.todos.splice(todoIndex,1);
 
   return response
-  .status(201)
+  .status(204)
   .send();
 });
 
